@@ -38,10 +38,10 @@ public class ShortURL {
     /**
      * Create short URL's synchronously
      */
-    public static String makeShort(final String longUrl) {
+    public static String makeShort(final String longUrl, final String key) {
 
         String url = longUrl;
-        String json = connect(longUrl);
+        String json = connect(longUrl, key);
 
         try {
 
@@ -64,7 +64,7 @@ public class ShortURL {
     /**
      * Create short URL's asynchronously
      */
-    public static void makeShortUrl(final String longUrl, ShortUrlListener listener) {
+    public static void makeShortUrl(final String longUrl, final String key, ShortUrlListener listener) {
 
         _listener = listener;
 
@@ -73,7 +73,7 @@ public class ShortURL {
             public void run() {
 
                 String url = longUrl;
-                String json = connect(longUrl);
+                String json = connect(longUrl, key);
 
                 try {
 
@@ -115,12 +115,12 @@ public class ShortURL {
         }
     };
 
-    private static String connect(String longUrl) {
+    private static String connect(String longUrl, final String key) {
         String res = "";
 
         try {
             // URLConnection conn = new URL(URL + KEY).openConnection();
-            URLConnection conn = new URL(URL + BuildConfig.gKey).openConnection();
+            URLConnection conn = new URL(URL + key).openConnection();
             conn.setDoOutput(true);
             conn.setRequestProperty("Content-Type", "application/json");
             OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());

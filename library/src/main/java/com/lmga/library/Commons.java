@@ -149,12 +149,12 @@ public class Commons {
         }
     }
 
-    public static void shareApp(@NonNull Context context) {
+    public static void shareApp(@NonNull Context context, String shortUrlApiKey) {
         String appName = context.getApplicationInfo().loadLabel(context.getPackageManager()).toString();
         String appId = context.getPackageName();
         String appUrl = "https://play.google.com/store/apps/details?id=" + appId;
 
-        String appShortUrl = ShortURL.makeShort(appUrl);
+        String appShortUrl = ShortURL.makeShort(appUrl, shortUrlApiKey);
         String shareBody = "Unduh aplikasi \"%s\" pada link berikut: %s";
         String shareBodyText = String.format(shareBody, appName, appShortUrl);
 

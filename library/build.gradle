@@ -7,20 +7,17 @@ android {
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 25
-        versionCode 3
-        versionName "1.3"
+        versionCode 4
+        versionName "1.4"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
     buildTypes {
         debug {
-            buildConfigField "String", "gKey", "\"${gKey}\""
         }
         release {
-            buildConfigField "String", "gKey", "\"${gKey}\""
-
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
