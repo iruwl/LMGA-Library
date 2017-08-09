@@ -149,20 +149,27 @@ public class Commons {
         }
     }
 
-    public static void shareApp(@NonNull Context context, String shortUrlApiKey) {
-        String appName = context.getApplicationInfo().loadLabel(context.getPackageManager()).toString();
+    public static void shareApp(@NonNull final Context context, String shortUrlApiKey) {
         String appId = context.getPackageName();
-        String appUrl = "https://play.google.com/store/apps/details?id=" + appId;
+        final String appName = context.getApplicationInfo().loadLabel(context.getPackageManager()).toString();
+        final String appUrl = "https://play.google.com/store/apps/details?id=" + appId;
+        final String shareBody = "Unduh aplikasi \"%s\" pada link berikut: %s";
 
-        String appShortUrl = ShortURL.makeShort(appUrl, shortUrlApiKey);
-        String shareBody = "Unduh aplikasi \"%s\" pada link berikut: %s";
-        String shareBodyText = String.format(shareBody, appName, appShortUrl);
+        ShortURL.makeShortUrl(appUrl, shortUrlApiKey, new ShortURL.ShortUrlListener() {
+            @Override
+            public void OnFinish(String url) {
+                String shareBodyText = String.format(shareBody, appName, appUrl);
+                if (url != null && 0 < url.length()) {
+                    shareBodyText = String.format(shareBody, appName, url);
+                }
 
-        Intent intent = new Intent(android.content.Intent.ACTION_SEND);
-        intent.setType("text/plain");
-        intent.putExtra(android.content.Intent.EXTRA_SUBJECT, appName);
-        intent.putExtra(android.content.Intent.EXTRA_TEXT, shareBodyText);
-        context.startActivity(Intent.createChooser(intent, "Silahkan pilih media"));
+                Intent intent = new Intent(android.content.Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(android.content.Intent.EXTRA_SUBJECT, appName);
+                intent.putExtra(android.content.Intent.EXTRA_TEXT, shareBodyText);
+                context.startActivity(Intent.createChooser(intent, "Silahkan pilih media"));
+            }
+        });
     }
 
     @NonNull
