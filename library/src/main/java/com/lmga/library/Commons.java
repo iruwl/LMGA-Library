@@ -74,44 +74,46 @@ public class Commons {
     public static void showFbPage(@NonNull Context context) {
         String facebookUrl = "https://www.facebook.com/lmga2017";
         PackageManager packageManager = context.getPackageManager();
+
         try {
             int versionCode = packageManager.getPackageInfo("com.facebook.katana", 0).versionCode;
             if (versionCode >= 3002850) {
-                //newer versions of fb app
+                // newer versions of fb app
                 facebookUrl = "fb://facewebmodal/f?href=https://www.facebook.com/lmga2017";
             } else {
-                //older versions of fb app
+                // older versions of fb app
                 facebookUrl = "fb://page/lmga2017";
             }
         } catch (PackageManager.NameNotFoundException e) {
             Log.d("irulApp", "Error: " + e.getMessage());
         }
 
-        Intent fbIntent = new Intent(Intent.ACTION_VIEW);
-        fbIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        fbIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        fbIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        fbIntent.setData(Uri.parse(facebookUrl));
-        context.startActivity(fbIntent);
+        openClearIntent(context, new Intent(Intent.ACTION_VIEW, Uri.parse(facebookUrl)));
     }
 
     public static void showDevStore(@NonNull Context context) {
         final String developerID = "6711078644974658535";
-        final String publisherName = "LMGA";
-
-        Intent appsIntent = new Intent(Intent.ACTION_VIEW);
-        appsIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        appsIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        appsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Intent intent = new Intent(Intent.ACTION_VIEW);
 
         try {
-            // appsIntent.setData(Uri.parse("market://search?q=pub:" + publisherName));
-            appsIntent.setData(Uri.parse("market://dev?id=" + developerID));
-            context.startActivity(appsIntent);
+            intent.setData(Uri.parse("market://dev?id=" + developerID));
+            openClearIntent(context, intent);
         } catch (android.content.ActivityNotFoundException anfe) {
-            // appsIntent.setData(Uri.parse("https://play.google.com/store/search?q=pub:" + publisherName));
-            appsIntent.setData(Uri.parse("https://play.google.com/store/apps/dev?id=" + developerID));
-            context.startActivity(appsIntent);
+            intent.setData(Uri.parse("https://play.google.com/store/apps/dev?id=" + developerID));
+            openClearIntent(context, intent);
+        }
+    }
+
+    public static void showAppList(@NonNull Context context) {
+        final String publisherName = "LMGA";
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+
+        try {
+            intent.setData(Uri.parse("market://search?q=pub:" + publisherName));
+            openClearIntent(context, intent);
+        } catch (android.content.ActivityNotFoundException anfe) {
+            intent.setData(Uri.parse("https://play.google.com/store/search?q=pub:" + publisherName));
+            openClearIntent(context, intent);
         }
     }
 
@@ -120,29 +122,21 @@ public class Commons {
         String appId = context.getPackageName();
         boolean marketFound = false;
 
-        Intent rateIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appId));
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appId));
 
-        // find all applications able to handle our rateIntent
-        final List<ResolveInfo> otherApps = context.getPackageManager().queryIntentActivities(rateIntent, 0);
+        // find all applications able to handle our intent
+        final List<ResolveInfo> otherApps = context.getPackageManager().queryIntentActivities(intent, 0);
         for (ResolveInfo otherApp : otherApps) {
             // look for Google Play application
             if (otherApp.activityInfo.applicationInfo.packageName.equals("com.android.vending")) {
                 ActivityInfo otherAppActivity = otherApp.activityInfo;
                 ComponentName componentName = new ComponentName(
-                        otherAppActivity.applicationInfo.packageName,
-                        otherAppActivity.name
-                );
-                // task reparenting if needed
-                rateIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-                // if the Google Play was already open in a search result
-                // this make sure it still go to the app page you requested
-                rateIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                // make sure it does NOT open in the stack of your activity
-                rateIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                // this make sure only the Google Play app is allowed to
-                // intercept the intent
-                rateIntent.setComponent(componentName);
-                context.startActivity(rateIntent);
+                        otherAppActivity.applicationInfo.packageName, otherAppActivity.name);
+
+                // this make sure only the Google Play app is allowed to intercept the intent
+                intent.setComponent(componentName);
+                openClearIntent(context, intent);
+
                 marketFound = true;
                 break;
             }
@@ -150,13 +144,25 @@ public class Commons {
 
         // if GP not present on device, open web browser
         if (!marketFound) {
-            Intent webIntent = new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("https://play.google.com/store/apps/details?id=" + appId));
-            webIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-            webIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            webIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(webIntent);
+            openClearIntent(context, new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://play.google.com/store/apps/details?id=" + appId)));
         }
+    }
+
+    public static void shareApp(@NonNull Context context) {
+        String appName = context.getApplicationInfo().loadLabel(context.getPackageManager()).toString();
+        String appId = context.getPackageName();
+        String appUrl = "https://play.google.com/store/apps/details?id=" + appId;
+
+        String appShortUrl = ShortURL.makeShort(appUrl);
+        String shareBody = "Unduh aplikasi \"%s\" pada link berikut: %s";
+        String shareBodyText = String.format(shareBody, appName, appShortUrl);
+
+        Intent intent = new Intent(android.content.Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(android.content.Intent.EXTRA_SUBJECT, appName);
+        intent.putExtra(android.content.Intent.EXTRA_TEXT, shareBodyText);
+        context.startActivity(Intent.createChooser(intent, "Silahkan pilih media"));
     }
 
     @NonNull
@@ -166,5 +172,17 @@ public class Commons {
         dialog.setCancelable(false);
         dialog.setMessage("Harap tunggu...");
         return dialog;
+    }
+
+    public static void openClearIntent(Context context, Intent intent) {
+        // task reparenting if needed
+        intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        // if the Google Play was already open in a search result
+        // this make sure it still go to the app page you requested
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        // make sure it does NOT open in the stack of your activity
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        // this make sure only the Google Play app is allowed to
+        context.startActivity(intent);
     }
 }
